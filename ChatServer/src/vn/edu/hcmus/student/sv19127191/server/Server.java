@@ -206,6 +206,7 @@ public class Server implements Runnable {
 				}
 				for (Thread t : threads)
 					t.join();
+				writer.close();
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
