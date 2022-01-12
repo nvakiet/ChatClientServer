@@ -25,15 +25,15 @@ import java.util.Base64;
  * Description: ...<br/>
  */
 public class LoginFrame extends JFrame {
-	Socket s = null;
-	DataInputStream dis = null;
-	DataOutputStream dos = null;
-	JTextField ipField;
-	JTextField portField;
-	JTextField usrField;
-	JPasswordField pwField;
-	JButton loginBtn;
-	JButton regBtn;
+	private Socket s = null;
+	private DataInputStream dis = null;
+	private DataOutputStream dos = null;
+	private JTextField ipField;
+	private JTextField portField;
+	private JTextField usrField;
+	private JPasswordField pwField;
+	private JButton loginBtn;
+	private JButton regBtn;
 
 	public LoginFrame() {
 		super("Chat Client");
@@ -64,7 +64,7 @@ public class LoginFrame extends JFrame {
 		});
 	}
 
-	public void setupUI() {
+	private void setupUI() {
 		JPanel mainPane = new JPanel(new GridBagLayout());
 
 		// Set up UI components
@@ -138,6 +138,7 @@ public class LoginFrame extends JFrame {
 
 		gbc = new GridBagConstraints();
 		usrField = new JTextField(15);
+		usrField.setText("admin");
 		usrField.setFont(new Font("Arial", Font.PLAIN, 14));
 		lbUsr.setLabelFor(usrField);
 		gbc.gridx = 1;
@@ -160,6 +161,7 @@ public class LoginFrame extends JFrame {
 
 		gbc = new GridBagConstraints();
 		pwField = new JPasswordField(15);
+		pwField.setText("admin");
 		pwField.setFont(new Font("Arial", Font.PLAIN, 14));
 		lbPw.setLabelFor(pwField);
 		gbc.gridx = 1;
@@ -182,7 +184,7 @@ public class LoginFrame extends JFrame {
 
 		// Login button
 		gbc = new GridBagConstraints();
-		loginBtn = new JButton("Login");
+		loginBtn = new JButton("Log In");
 		loginBtn.setFont(new Font("Arial", Font.BOLD, 16));
 		gbc.gridx = 3;
 		gbc.gridy = 4;
@@ -196,7 +198,7 @@ public class LoginFrame extends JFrame {
 		setResizable(false);
 	}
 
-	public void connect() {
+	private void connect() {
 		try {
 			if (s != null) {
 				s.close();
@@ -213,7 +215,7 @@ public class LoginFrame extends JFrame {
 		}
 	}
 
-	public void login(String username, String password) {
+	private void login(String username, String password) {
 		enableUI(false);
 		SwingUtilities.invokeLater(() -> {
 			connect();
@@ -228,8 +230,7 @@ public class LoginFrame extends JFrame {
 					if (response.equals("Login success")) {
 						JOptionPane.showMessageDialog(this,
 								"Login succesfully.");
-						ChatFrame chatFrame = new ChatFrame();
-						chatFrame.pack();
+						ChatFrame chatFrame = new ChatFrame(s, dis, dos, username);
 						chatFrame.setVisible(true);
 						this.dispose();
 					} else {
@@ -245,7 +246,7 @@ public class LoginFrame extends JFrame {
 		});
 	}
 
-	public void register(String username, String password) {
+	private void register(String username, String password) {
 		enableUI(false);
 		SwingUtilities.invokeLater(() -> {
 			connect();
@@ -260,8 +261,7 @@ public class LoginFrame extends JFrame {
 					if (response.equals("Register success")) {
 						JOptionPane.showMessageDialog(this,
 								"Register succesfully. You'll now be logged in.");
-						ChatFrame chatFrame = new ChatFrame();
-						chatFrame.pack();
+						ChatFrame chatFrame = new ChatFrame(s, dis, dos, username);
 						chatFrame.setVisible(true);
 						this.dispose();
 					} else {

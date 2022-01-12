@@ -83,17 +83,14 @@ public class Server implements Runnable {
 	}
 
 	public void notifyOnline() {
-		StringBuilder msg = new StringBuilder();
-		for (String usr : clients.keySet()) {
-			msg.append(usr).append(";");
-		}
+		String msg = String.join(";", clients.keySet());
 		for (String usr : clients.keySet()) {
 			synchronized (locks.get(usr)) {
 				try {
 					if (clients.get(usr).willBeClosed())
 						continue;
 					clients.get(usr).getDos().writeUTF("Online");
-					clients.get(usr).getDos().writeUTF(msg.toString());
+					clients.get(usr).getDos().writeUTF(msg);
 					clients.get(usr).getDos().flush();
 				} catch (Exception e) {
 					System.out.println("Can't send to " + usr + ". The connection is interrupted.");
