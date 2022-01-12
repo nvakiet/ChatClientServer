@@ -2,6 +2,7 @@ package vn.edu.hcmus.student.sv19127191.server;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
@@ -97,7 +98,7 @@ public class ClientHandler implements Runnable {
 					String sendTo = dis.readUTF();
 					String filename = dis.readUTF();
 					int fileSize = dis.readInt();
-					int bufferSize = 2048;
+					int bufferSize = 4096;
 					byte[] buffer = new byte[bufferSize];
 
 					ClientHandler target = server.getClient(sendTo);
@@ -106,12 +107,12 @@ public class ClientHandler implements Runnable {
 						out.writeUTF("File");
 						out.writeUTF(this.usr);
 						out.writeUTF(filename);
-						out.writeLong(fileSize);
+						out.writeInt(fileSize);
 						while (fileSize > 0) {
 							// Read the file into buffer
 							// Then send the buffer to the target one at a time
 							int bRead = dis.read(buffer, 0, Math.min(fileSize, bufferSize));
-							if (bRead == -1)
+							if (bRead < 1)
 								break;
 							out.write(buffer, 0, Math.min(fileSize, bufferSize));
 							fileSize -= bRead;
@@ -129,7 +130,10 @@ public class ClientHandler implements Runnable {
 					}
 				}
 			}
+		} catch (EOFException eofException) {
+			System.out.println(usr + " closed connection.");
 		} catch (Exception e) {
+			System.out.println(usr + " encountered an error:");
 			e.printStackTrace();
 		} finally {
 			try {

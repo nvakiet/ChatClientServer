@@ -17,6 +17,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * vn.edu.hcmus.student.sv19127191<br/>
@@ -57,6 +59,13 @@ public class LoginFrame extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				String username = usrField.getText();
 				String password = hashPassword(pwField.getPassword());
+				Pattern pattern = Pattern.compile("^[ A-Za-z0-9]+$");
+				Matcher matcher = pattern.matcher(username);
+				if (!matcher.matches()) {
+					JOptionPane.showMessageDialog(getContentPane(),
+							"Username can only contain: letters (uppercase and lowercase), numbers and whitespaces");
+					return;
+				}
 				if (username != null && password != null) {
 					register(username, password);
 				}
@@ -204,6 +213,7 @@ public class LoginFrame extends JFrame {
 				s.close();
 			}
 			s = new Socket();
+			s.setSoTimeout(500);
 			// Connect with 10s timeout
 			s.connect(new InetSocketAddress(ipField.getText(), Integer.parseInt(portField.getText())), 10000);
 			dis = new DataInputStream(s.getInputStream());
@@ -211,7 +221,7 @@ public class LoginFrame extends JFrame {
 		} catch (Exception e) {
 			e.printStackTrace();
 			JOptionPane.showMessageDialog(this,
-					"An error has occurred: " + e.getMessage());
+					"Can't connect to server.");
 		}
 	}
 
@@ -219,6 +229,10 @@ public class LoginFrame extends JFrame {
 		enableUI(false);
 		SwingUtilities.invokeLater(() -> {
 			connect();
+			if (!s.isConnected()) {
+				enableUI(true);
+				return;
+			}
 			synchronized (dos) {
 				try {
 					dos.writeUTF("Login");
@@ -229,7 +243,7 @@ public class LoginFrame extends JFrame {
 					String response = dis.readUTF();
 					if (response.equals("Login success")) {
 						JOptionPane.showMessageDialog(this,
-								"Login succesfully.");
+								"Log in succesfully.");
 						ChatFrame chatFrame = new ChatFrame(s, dis, dos, username);
 						chatFrame.setVisible(true);
 						this.dispose();
@@ -250,6 +264,10 @@ public class LoginFrame extends JFrame {
 		enableUI(false);
 		SwingUtilities.invokeLater(() -> {
 			connect();
+			if (!s.isConnected()) {
+				enableUI(true);
+				return;
+			}
 			synchronized (dos) {
 				try {
 					dos.writeUTF("Register");
