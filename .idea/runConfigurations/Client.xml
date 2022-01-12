@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Client" type="Application" factoryName="Application" singleton="false">
+    <option name="MAIN_CLASS_NAME" value="vn.edu.hcmus.student.sv19127191.Main" />
+    <module name="ChatClient" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/ChatClient" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

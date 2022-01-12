@@ -7,4 +7,13 @@ package vn.edu.hcmus.student.sv19127191;
  * Description: ...<br/>
  */
 public class Main {
+	public static void main(String[] args) {
+		try {
+			LoginFrame frame = new LoginFrame();
+			frame.pack();
+			frame.setVisible(true);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 }

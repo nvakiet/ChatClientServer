@@ -4,6 +4,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 
 /**
  * vn.edu.hcmus.student.sv19127191.server<br/>
@@ -25,6 +27,8 @@ public class ClientHandler implements Runnable {
 
 	public ClientHandler(Socket s, String username, String password, Object lock, Server server) throws IOException {
 		this.s = s;
+		this.s.setKeepAlive(true);
+		this.s.setSoTimeout(500);
 		this.ip = s.getRemoteSocketAddress().toString();
 		this.usr = username;
 		this.pw = password;
@@ -64,7 +68,15 @@ public class ClientHandler implements Runnable {
 		try {
 			while (!willClose) {
 				// Read a command from client
-				String command = dis.readUTF();
+				String command = null;
+				try {
+					command = dis.readUTF();
+				} catch (SocketTimeoutException timeoutException) {
+					continue;
+				} catch (SocketException socketException) {
+					close();
+					continue;
+				}
 
 				// Perform send text to another client
 				if (command.equals("Text")) {
@@ -77,6 +89,7 @@ public class ClientHandler implements Runnable {
 						out.writeUTF(this.usr);
 						out.writeUTF(msg);
 						out.flush();
+						System.out.println(usr + " sends a text to " + sendTo);
 					}
 				}
 				// Perform send file to another client
@@ -104,6 +117,7 @@ public class ClientHandler implements Runnable {
 							fileSize -= bRead;
 						}
 						out.flush();
+						System.out.println(usr + " sends a file to " + sendTo);
 					}
 				}
 				// Perform logout
@@ -125,6 +139,7 @@ public class ClientHandler implements Runnable {
 			}
 			server.removeOnline(usr);
 			server.notifyOnline();
+			System.out.println(usr + " has logged out.");
 		}
 	}
 

@@ -92,12 +92,12 @@ public class Server implements Runnable {
 				try {
 					if (clients.get(usr).willBeClosed())
 						continue;
-					clients.get(usr).getDos().writeUTF("Current online");
+					clients.get(usr).getDos().writeUTF("Online");
 					clients.get(usr).getDos().writeUTF(msg.toString());
 					clients.get(usr).getDos().flush();
 				} catch (Exception e) {
 					System.out.println("Can't send to " + usr + ". The connection is interrupted.");
-					e.printStackTrace();
+					removeOnline(usr);
 				}
 			}
 		}
@@ -110,7 +110,7 @@ public class Server implements Runnable {
 				// Wait for a client to connect
 				Socket socket = null;
 				try {
-					ss.accept();
+					socket = ss.accept();
 				} catch (SocketTimeoutException timeout) {
 					continue;
 				}
@@ -147,6 +147,7 @@ public class Server implements Runnable {
 									clientThread.start();
 									status = 1;
 									notifyOnline();
+									System.out.println(acc.username + " has logged in.");
 								}
 								else {
 									dos.writeUTF("Wrong password");
@@ -183,6 +184,7 @@ public class Server implements Runnable {
 						acc.password = password;
 						accounts.add(acc);
 						writer.println(acc.username + ";" + acc.password);
+						writer.flush();
 						dos.writeUTF("Register success");
 						dos.flush();
 						Object lock = new Object();
@@ -193,6 +195,7 @@ public class Server implements Runnable {
 						threads.add(clientThread);
 						clientThread.start();
 						notifyOnline();
+						System.out.println(acc.username + " is registered and logged in.");
 					}
 				}
 			}
