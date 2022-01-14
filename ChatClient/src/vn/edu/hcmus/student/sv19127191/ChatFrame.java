@@ -386,7 +386,7 @@ public class ChatFrame extends JFrame {
 			String className = isSender? "user" : "target";
 			HTMLEditorKit kit = (HTMLEditorKit) chatBox.getEditorKit();
 			StyleSheet sheet = kit.getStyleSheet();
-			
+
 			// Add the new file to the file handler of this chat session
 			String session = isSender? currentTarget.getText() : messenger;
 			FileHandler handler = filehandlers.get(session);
