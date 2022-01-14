@@ -29,6 +29,7 @@ public class MainFrame extends JFrame {
 		server = new Server();
 		socketThread = new Thread(server);
 		setupListeners();
+		getRootPane().setDefaultButton(startBtn);
 	}
 
 	private void setupServerPanel() {

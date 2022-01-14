@@ -7,7 +7,6 @@ import java.awt.event.ActionListener;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.math.BigInteger;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -16,7 +15,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,6 +52,8 @@ public class LoginFrame extends JFrame {
 			}
 		});
 
+
+
 		regBtn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -71,6 +71,9 @@ public class LoginFrame extends JFrame {
 				}
 			}
 		});
+
+		// Set login button as default for Enter key press
+		getRootPane().setDefaultButton(loginBtn);
 	}
 
 	private void setupUI() {

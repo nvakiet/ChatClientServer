@@ -1,11 +1,8 @@
 package vn.edu.hcmus.student.sv19127191;
 
-import org.w3c.dom.css.CSSStyleSheet;
-
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
-import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
@@ -268,10 +265,10 @@ public class ChatFrame extends JFrame {
 						}
 						chatBox.setStyledDocument(currentDoc);
 						boxScroll.getVerticalScrollBar().setValue(boxScroll.getVerticalScrollBar().getMaximum());
-					} else {
+					} else if (onlineList.getSelectedIndex() == 0) {
 						currentTarget.setText("<Choose another online user>");
 						currentDoc = null;
-						chatBox.setStyledDocument(new HTMLDocument());
+						chatBox.setStyledDocument((StyledDocument) chatBox.getEditorKit().createDefaultDocument());
 					}
 
 				}
@@ -361,7 +358,7 @@ public class ChatFrame extends JFrame {
 				return;
 
 			// Get the html style sheet from css file
-			String className = messenger.equals(username)? ".user" : ".target";
+			String className = messenger.equals(username)? "user" : "target";
 			HTMLEditorKit kit = (HTMLEditorKit) chatBox.getEditorKit();
 
 			// Insert the messenger name and message into the document
@@ -559,7 +556,8 @@ public class ChatFrame extends JFrame {
 
 		public FileHandler(String sessionName) {
 			session = sessionName;
-			dataDir = "data/" + session;
+			dataDir = "data/" + username.replace(" ", "%20")
+					+ "/" + session.replace(" ", "%20");
 			files = new HashMap<>();
 			fileList = new LinkedList<>();
 			limit = 20;
@@ -600,13 +598,50 @@ public class ChatFrame extends JFrame {
 				}
 
 				// Ask if the user wants to open the file with Desktop API
-				int result = JOptionPane.showConfirmDialog(getContentPane(),
+				String[] options = new String[] {"Open", "Show in Directory", "Cancel"};
+				int result = JOptionPane.showOptionDialog(getContentPane(),
 						"The file is saved in \"" + file.getPath() + "\".\n" +
 								"Do you want to open it?",
 						"Open this file?",
-						JOptionPane.YES_NO_OPTION);
-				if (result == JOptionPane.YES_OPTION) {
-					Desktop.getDesktop().open(file);
+						JOptionPane.DEFAULT_OPTION,
+						JOptionPane.QUESTION_MESSAGE,
+						null, options, options[0]);
+				if (result == 0) {
+					Thread t = new Thread(() -> {
+						try {
+							Desktop.getDesktop().open(file);
+						} catch (UnsupportedOperationException unsupportedOperationException) {
+							JOptionPane.showMessageDialog(getContentPane(),
+									"Your computer platform doesn't support this action.\n" +
+											"You can manually view the file at:\n" +
+											"\"<Program directory>/" + dataDir + "/" + file.getName() + "\"");
+						} catch (Exception e) {
+							e.printStackTrace();
+							JOptionPane.showMessageDialog(getContentPane(),
+									"An error has occurred while handling file \"" + file.getName() + "\":\n"
+											+ e.getMessage());
+						}
+					});
+					t.setDaemon(true);
+					t.start();
+				} else if (result == 1) {
+					Thread t = new Thread(() -> {
+						try {
+							Desktop.getDesktop().open(file.getParentFile());
+						} catch (UnsupportedOperationException unsupportedOperationException) {
+							JOptionPane.showMessageDialog(getContentPane(),
+									"Your computer platform doesn't support this action.\n" +
+											"You can manually view the file at:\n" +
+											"\"<Program directory>/" + dataDir + "/" + file.getName() + "\"");
+						} catch (Exception e) {
+							e.printStackTrace();
+							JOptionPane.showMessageDialog(getContentPane(),
+									"An error has occurred while handling file \"" + file.getName() + "\":\n"
+											+ e.getMessage());
+						}
+					});
+					t.setDaemon(true);
+					t.start();
 				}
 			} catch (UnsupportedOperationException unsupportedOperationException) {
 				JOptionPane.showMessageDialog(getContentPane(),
