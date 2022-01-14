@@ -1,0 +1,31 @@
+p, a {
+    font-family: Arial, sans-serif;
+    font-size: 14pt;
+    margin: 1px 0;
+}
+
+.user {
+    font-family: Arial, sans-serif;
+    font-size: 14pt;
+    margin: 1px 0;
+    font-weight: bold;
+    color: blue;
+}
+
+.target {
+    font-family: Arial, sans-serif;
+    font-size: 14pt;
+    margin: 1px 0;
+    font-weight: bold;
+    color: red;
+}
+
+.filename {
+    font-family: Arial, sans-serif;
+    font-size: 14pt;
+    margin: 1px 0;
+    font-style: italic;
+    font-weight: 550;
+    text-decoration: underline;
+    color: green;
+}

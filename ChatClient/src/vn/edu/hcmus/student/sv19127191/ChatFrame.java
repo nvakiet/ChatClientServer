@@ -1,25 +1,23 @@
 package vn.edu.hcmus.student.sv19127191;
 
+import org.w3c.dom.css.CSSStyleSheet;
+
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.event.*;
 import javax.swing.text.*;
+import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.TreeMap;
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
+import java.util.*;
 
 /**
  * vn.edu.hcmus.student.sv19127191<br/>
@@ -34,8 +32,8 @@ public class ChatFrame extends JFrame {
 	private final DataOutputStream dos;
 	private String username;
 	private JLabel currentTarget;
-	private StyledDocument currentDoc;
-	private TreeMap<String, StyledDocument> chatLogs;
+	private HTMLDocument currentDoc;
+	private TreeMap<String, HTMLDocument> chatLogs;
 	private JList<String> onlineList;
 	private JScrollPane boxScroll;
 	private JTextPane chatBox;
@@ -43,6 +41,8 @@ public class ChatFrame extends JFrame {
 	private JButton logoutBtn;
 	private JButton sendBtn;
 	private JButton fileBtn;
+	private HashMap<String, FileHandler> filehandlers;
+	private String cwd;
 
 	public ChatFrame(Socket s, DataInputStream dis, DataOutputStream dos, String usr) {
 		super("Chat Client: " + usr);
@@ -54,6 +54,8 @@ public class ChatFrame extends JFrame {
 		currentTarget = null;
 		currentDoc = null;
 		chatLogs = new TreeMap<>();
+		filehandlers = new HashMap<>();
+		cwd = Paths.get(".").toAbsolutePath().normalize().toString();
 		receiver = new Receiver();
 
 		setLayout(new BorderLayout());
@@ -113,62 +115,83 @@ public class ChatFrame extends JFrame {
 	}
 
 	private void setupChatPanel() {
-		JPanel centerPanel = new JPanel(new GridBagLayout());
+		try {
+			JPanel centerPanel = new JPanel(new GridBagLayout());
 
-		// Chat box labels
-		JLabel lbChat = new JLabel("Chatting with:");
-		lbChat.setFont(new Font("Arial", Font.BOLD, 16));
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		placeComp(gbc, centerPanel, lbChat, 0, 0, 1, 1);
+			// Chat box labels
+			JLabel lbChat = new JLabel("Chatting with:");
+			lbChat.setFont(new Font("Arial", Font.BOLD, 16));
+			GridBagConstraints gbc = new GridBagConstraints();
+			gbc.fill = GridBagConstraints.HORIZONTAL;
+			placeComp(gbc, centerPanel, lbChat, 0, 0, 1, 1);
 
-		currentTarget = new JLabel("<Choose another online user>");
-		currentTarget.setFont(new Font("Arial", Font.BOLD, 16));
-		gbc = new GridBagConstraints();
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		placeComp(gbc, centerPanel, currentTarget, 1, 0, 1, 1);
+			currentTarget = new JLabel("<Choose another online user>");
+			currentTarget.setFont(new Font("Arial", Font.BOLD, 16));
+			gbc = new GridBagConstraints();
+			gbc.fill = GridBagConstraints.HORIZONTAL;
+			placeComp(gbc, centerPanel, currentTarget, 1, 0, 1, 1);
 
-		// Chat box
-		chatBox = new JTextPane();
-		chatBox.setEditable(false);
-		boxScroll = new JScrollPane(chatBox);
-		boxScroll.setPreferredSize(new Dimension(600, 400));
-		gbc = new GridBagConstraints();
-		gbc.fill = GridBagConstraints.BOTH;
-		gbc.weightx = 1.5;
-		gbc.weighty = 1.5;
-		placeComp(gbc, centerPanel, boxScroll, 0, 1, 8, 7);
+			// Chat box
+			chatBox = new JTextPane();
+			chatBox.setEditable(false);
+			HTMLEditorKit kit = new HTMLEditorKit();
+			StyleSheet sheet = new StyleSheet();
+			sheet.importStyleSheet(new File("resources/style.css").toURI().toURL());
+			kit.setStyleSheet(sheet);
+			chatBox.setEditorKit(kit);
+			boxScroll = new JScrollPane(chatBox);
+			boxScroll.setPreferredSize(new Dimension(600, 400));
+			gbc = new GridBagConstraints();
+			gbc.fill = GridBagConstraints.BOTH;
+			gbc.weightx = 1.5;
+			gbc.weighty = 1.5;
+			placeComp(gbc, centerPanel, boxScroll, 0, 1, 8, 7);
 
-		// Chat input area
-		chatInput = new JTextArea(2, 30);
-		JScrollPane textScroll = new JScrollPane(chatInput);
-		textScroll.setPreferredSize(new Dimension(400, 50));
-		gbc = new GridBagConstraints();
-		gbc.fill = GridBagConstraints.BOTH;
-		gbc.weightx = 1.5;
-		gbc.weighty = 1.5;
-		placeComp(gbc, centerPanel, textScroll, 0, 8, 7, 2);
+			// Chat input area
+			chatInput = new JTextArea(2, 30);
+			JScrollPane textScroll = new JScrollPane(chatInput);
+			textScroll.setPreferredSize(new Dimension(400, 50));
+			gbc = new GridBagConstraints();
+			gbc.fill = GridBagConstraints.BOTH;
+			gbc.weightx = 1.5;
+			gbc.weighty = 1.5;
+			placeComp(gbc, centerPanel, textScroll, 0, 8, 7, 2);
 
-		// File send button
-		Icon fileIcon = new ImageIcon("icons/folder.png");
-		fileBtn = new JButton(fileIcon);
-		fileBtn.setToolTipText("Send a file");
-		gbc = new GridBagConstraints();
-		gbc.fill = GridBagConstraints.BOTH;
-		gbc.weighty = 1.1;
-		placeComp(gbc, centerPanel, fileBtn, 7, 8, 1, 1);
+			// File send button
+			Icon fileIcon = new ImageIcon("resources/folder.png");
+			fileBtn = new JButton(fileIcon);
+			fileBtn.setToolTipText("Send a file");
+			gbc = new GridBagConstraints();
+			gbc.fill = GridBagConstraints.BOTH;
+			gbc.weighty = 1.1;
+			placeComp(gbc, centerPanel, fileBtn, 7, 8, 1, 1);
 
-		// Text send button
-		Icon sendIcon = new ImageIcon("icons/send.png");
-		sendBtn = new JButton(sendIcon);
-		sendBtn.setToolTipText("Send text message");
-		gbc = new GridBagConstraints();
-		gbc.fill = GridBagConstraints.BOTH;
-		gbc.weighty = 1.1;
-		placeComp(gbc, centerPanel, sendBtn, 7, 9, 1, 1);
+			// Text send button
+			Icon sendIcon = new ImageIcon("resources/send.png");
+			sendBtn = new JButton(sendIcon);
+			sendBtn.setToolTipText("Send text message");
+			gbc = new GridBagConstraints();
+			gbc.fill = GridBagConstraints.BOTH;
+			gbc.weighty = 1.1;
+			placeComp(gbc, centerPanel, sendBtn, 7, 9, 1, 1);
 
-		// Add this panel to the center of content panel
-		add(centerPanel, BorderLayout.CENTER);
+			// Add this panel to the center of content panel
+			add(centerPanel, BorderLayout.CENTER);
+		} catch (Exception e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(this,
+					"Can't launch chat window.\n" +
+							"Error: " + e.getMessage());
+			try {
+				socket.close();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+			LoginFrame frame = new LoginFrame();
+			frame.pack();
+			frame.setVisible(true);
+			this.dispose();
+		}
 	}
 
 	private void setupButtons() {
@@ -187,7 +210,7 @@ public class ChatFrame extends JFrame {
 				try {
 					String target = currentTarget.getText();
 					if (!target.startsWith("<")) {
-						StyledDocument doc = chatLogs.get(target);
+						HTMLDocument doc = chatLogs.get(target);
 						String text = chatInput.getText();
 						displayNewText(doc, username, text);
 						sendText(target, text);
@@ -199,6 +222,7 @@ public class ChatFrame extends JFrame {
 			}
 		});
 
+		// Send file button
 		fileBtn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -223,7 +247,7 @@ public class ChatFrame extends JFrame {
 						currentTarget.setText(onlineList.getSelectedValue());
 						currentDoc = chatLogs.get(currentTarget.getText());
 						if (currentDoc == null) {
-							currentDoc = new DefaultStyledDocument();
+							currentDoc =(HTMLDocument) ((HTMLEditorKit) chatBox.getEditorKit()).createDefaultDocument();
 							chatLogs.put(currentTarget.getText(), currentDoc);
 							currentDoc.addDocumentListener(new DocumentListener() {
 								@Override
@@ -247,7 +271,7 @@ public class ChatFrame extends JFrame {
 					} else {
 						currentTarget.setText("<Choose another online user>");
 						currentDoc = null;
-						chatBox.setStyledDocument(new DefaultStyledDocument());
+						chatBox.setStyledDocument(new HTMLDocument());
 					}
 
 				}
@@ -305,7 +329,8 @@ public class ChatFrame extends JFrame {
 
 	private void sendFile(String target, File file) {
 		SwingUtilities.invokeLater(() -> {
-			try (BufferedInputStream fin = new BufferedInputStream(new FileInputStream(file))) {
+			try (BufferedInputStream fin = new BufferedInputStream(new FileInputStream(file));
+					ByteArrayOutputStream bout = new ByteArrayOutputStream()) {
 				synchronized (dos) {
 					dos.writeUTF("File");
 					dos.writeUTF(target);
@@ -316,10 +341,11 @@ public class ChatFrame extends JFrame {
 					byte[] buffer = new byte[4096];
 					while ((count = fin.read(buffer)) > 0) {
 						dos.write(buffer, 0, count);
+						bout.write(buffer, 0, count);
 					}
 					dos.flush();
 
-					displayNewFileName(chatLogs.get(target), username, file.getName(), null);
+					displayNewFileName(chatLogs.get(target), username, file.getName(), bout.toByteArray());
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -329,44 +355,20 @@ public class ChatFrame extends JFrame {
 		});
 	}
 
-	private void displayNewText(StyledDocument doc, String messenger, String message) {
+	private synchronized void displayNewText(HTMLDocument doc, String messenger, String message) {
 		try {
 			if (doc == null)
 				return;
 
-			// Define the display style of messenger name
-			Style messengerStyle = null;
-			if (messenger.equals(username)) {
-				messengerStyle = doc.getStyle("User");
-				if (messengerStyle == null) {
-					messengerStyle = doc.addStyle("User", null);
-					StyleConstants.setBold(messengerStyle, true);
-					StyleConstants.setFontSize(messengerStyle, 14);
-					StyleConstants.setForeground(messengerStyle, Color.BLUE);
-				}
-			} else {
-				messengerStyle = doc.getStyle("Target");
-				if (messengerStyle == null) {
-					messengerStyle = doc.addStyle("Target", null);
-					StyleConstants.setBold(messengerStyle, true);
-					StyleConstants.setFontSize(messengerStyle, 14);
-					StyleConstants.setForeground(messengerStyle, Color.RED);
-				}
-			}
-
-
-			// Define the display style of message
-			Style messageStyle = doc.getStyle("Message");
-			if (messageStyle == null) {
-				messageStyle = doc.addStyle("Message", null);
-				StyleConstants.setBold(messageStyle, false);
-				StyleConstants.setFontSize(messageStyle, 14);
-				StyleConstants.setForeground(messageStyle, Color.BLACK);
-			}
+			// Get the html style sheet from css file
+			String className = messenger.equals(username)? ".user" : ".target";
+			HTMLEditorKit kit = (HTMLEditorKit) chatBox.getEditorKit();
 
 			// Insert the messenger name and message into the document
-			doc.insertString(doc.getLength(), messenger + ":\n", messengerStyle);
-			doc.insertString(doc.getLength(), message + "\n", messageStyle);
+			String s = "<p class=\"" + className + "\">" + messenger + ":</p>";
+			kit.insertHTML(doc, doc.getLength(), s, 0,0,null);
+			s = "<p>" + message + "</p>";
+			kit.insertHTML(doc, doc.getLength(), s, 0,0,null);
 		} catch (Exception e) {
 			e.printStackTrace();
 			JOptionPane.showMessageDialog(getContentPane(),
@@ -374,46 +376,54 @@ public class ChatFrame extends JFrame {
 		}
 	}
 
-	private void displayNewFileName(StyledDocument doc, String messenger, String filename, byte[] fileData) {
+	private synchronized void displayNewFileName(HTMLDocument doc, String messenger, String filename, byte[] fileData) {
 		try {
 			if (doc == null)
 				return;
+			boolean isSender = messenger.equals(username);
 
-			// Define the display style of messenger name
-			Style messengerStyle = null;
-			if (messenger.equals(username)) {
-				messengerStyle = doc.getStyle("User");
-				if (messengerStyle == null) {
-					messengerStyle = doc.addStyle("User", null);
-					StyleConstants.setBold(messengerStyle, true);
-					StyleConstants.setFontSize(messengerStyle, 14);
-					StyleConstants.setForeground(messengerStyle, Color.BLUE);
-				}
-			} else {
-				messengerStyle = doc.getStyle("Target");
-				if (messengerStyle == null) {
-					messengerStyle = doc.addStyle("Target", null);
-					StyleConstants.setBold(messengerStyle, true);
-					StyleConstants.setFontSize(messengerStyle, 14);
-					StyleConstants.setForeground(messengerStyle, Color.RED);
-				}
+			// Get the html style sheet from css file
+			String className = isSender? "user" : "target";
+			HTMLEditorKit kit = (HTMLEditorKit) chatBox.getEditorKit();
+			StyleSheet sheet = kit.getStyleSheet();
+			
+			// Add the new file to the file handler of this chat session
+			String session = isSender? currentTarget.getText() : messenger;
+			FileHandler handler = filehandlers.get(session);
+			if (handler == null) {
+				handler = new FileHandler(session);
+				filehandlers.put(session, handler);
 			}
-
-
-			// Define the display style of file name
-			Style messageStyle = doc.getStyle("Filename");
-			if (messageStyle == null) {
-				messageStyle = doc.addStyle("Filename", null);
-				StyleConstants.setBold(messageStyle, false);
-				StyleConstants.setItalic(messageStyle, true);
-				StyleConstants.setUnderline(messageStyle, true);
-				StyleConstants.setFontSize(messageStyle, 14);
-				StyleConstants.setForeground(messageStyle, Color.GREEN);
-			}
+			handler.addFile(filename, fileData);
 
 			// Insert the messenger name and file name into the document
-			doc.insertString(doc.getLength(), messenger + ":\n", messengerStyle);
-			doc.insertString(doc.getLength(), filename + "\n", messageStyle);
+			String s = "<p class=\"" + className + "\">" + messenger + ":</p>";
+			kit.insertHTML(doc, doc.getLength(), s, 0,0,null);
+			StringBuilder hrefFile = new StringBuilder();
+			hrefFile.append(cwd).append("/")
+					.append(handler.getDataDir()).append("/")
+					.append(filename.replace(" ", "%20"));
+			s = "<a class=\"filename\" href=\"file:///" + hrefFile.toString() + "\">" + filename + "</a>";
+			kit.insertHTML(doc, doc.getLength(), s, 0,0,null);
+
+			if (chatBox.getHyperlinkListeners() == null || chatBox.getHyperlinkListeners().length == 0) {
+				chatBox.addHyperlinkListener(new HyperlinkListener() {
+					@Override
+					public void hyperlinkUpdate(HyperlinkEvent e) {
+						if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+							try {
+								File file = new File(e.getURL().toURI());
+								System.out.println(file.getName());
+								filehandlers.get(session).handleFile(messenger, file);
+							} catch (URISyntaxException ex) {
+								ex.printStackTrace();
+								JOptionPane.showMessageDialog(getContentPane(),
+										"An error has occurred: " + ex.getMessage());
+							}
+						}
+					}
+				});
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			JOptionPane.showMessageDialog(getContentPane(),
@@ -456,34 +466,34 @@ public class ChatFrame extends JFrame {
 					else if (response.equals("Text")) {
 						String fromUsr = dis.readUTF();
 						String msg = dis.readUTF();
-						synchronized (chatLogs) {
-							if (chatLogs.get(fromUsr) == null) {
-								StyledDocument doc = new DefaultStyledDocument();
-								chatLogs.put(fromUsr, doc);
-								doc.addDocumentListener(new DocumentListener() {
-									@Override
-									public void insertUpdate(DocumentEvent e) {
-										boxScroll.getVerticalScrollBar().setValue(boxScroll.getVerticalScrollBar().getMaximum());
-									}
-
-									@Override
-									public void removeUpdate(DocumentEvent e) {
-										// Do nothing
-									}
-
-									@Override
-									public void changedUpdate(DocumentEvent e) {
-										// Do nothing
-									}
-								});
-							}
-						}
+						putTargetDocument(fromUsr);
 						displayNewText(chatLogs.get(fromUsr), fromUsr, msg);
 					}
+					// Receive file message
+					else if (response.equals("File")) {
+						String fromUsr = dis.readUTF();
+						String filename = dis.readUTF();
+						int fileSize = dis.readInt();
+						int bufferSize = 4096;
+						byte[] buffer = new byte[bufferSize];
+						ByteArrayOutputStream bout = new ByteArrayOutputStream();
+
+						while (fileSize > 0) {
+							int bRead = dis.read(buffer, 0, Math.min(bufferSize, fileSize));
+							if (bRead < 1)
+								break;
+							bout.write(buffer, 0, Math.min(bufferSize, fileSize));
+							fileSize -= bRead;
+						}
+
+						// Display new file name
+						putTargetDocument(fromUsr);
+						displayNewFileName(chatLogs.get(fromUsr), fromUsr, filename, bout.toByteArray());
+						bout.close();
+					}
 				}
-			} catch (SocketException socketException) {
-				JOptionPane.showMessageDialog(getContentPane(), "Server has disconnected. Please log in again.");
-			} catch (EOFException eofException) {
+
+			} catch (SocketException | EOFException socketException) {
 				JOptionPane.showMessageDialog(getContentPane(), "Server has disconnected. Please log in again.");
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -508,6 +518,118 @@ public class ChatFrame extends JFrame {
 
 		public void close() {
 			willClose = true;
+		}
+
+		private void putTargetDocument(String target) {
+			synchronized (chatLogs) {
+				if (chatLogs.get(target) == null) {
+					HTMLDocument doc = (HTMLDocument) ((HTMLEditorKit) chatBox.getEditorKit()).createDefaultDocument();;
+					chatLogs.put(target, doc);
+					doc.addDocumentListener(new DocumentListener() {
+						@Override
+						public void insertUpdate(DocumentEvent e) {
+							boxScroll.getVerticalScrollBar().setValue(boxScroll.getVerticalScrollBar().getMaximum());
+						}
+
+						@Override
+						public void removeUpdate(DocumentEvent e) {
+							// Do nothing
+						}
+
+						@Override
+						public void changedUpdate(DocumentEvent e) {
+							// Do nothing
+						}
+					});
+				}
+			}
+		}
+	}
+
+	class FileHandler {
+		private final String session;
+		private final String dataDir;
+		private final HashMap<String, byte[]> files;
+		private final LinkedList<String> fileList;
+		private final int limit;
+
+		public String getDataDir() {
+			return dataDir;
+		}
+
+		public FileHandler(String sessionName) {
+			session = sessionName;
+			dataDir = "data/" + session;
+			files = new HashMap<>();
+			fileList = new LinkedList<>();
+			limit = 20;
+		}
+
+		public synchronized void addFile(String filename, byte[] data) {
+			files.put(filename, data);
+			fileList.add(filename);
+			removeOverLimit();
+		}
+
+		public synchronized void removeOverLimit() {
+			if (fileList.size() > limit) {
+				files.remove(fileList.remove());
+			}
+		}
+
+		public synchronized void handleFile(String sender, File file) {
+			try {
+				// If the session directory doesn't exist, create it
+				File dir = file.getParentFile();
+				if (dir != null)
+					dir.mkdirs();
+
+				// If the file doesn't exist, save it to session data directory
+				// Otherwise, open the file in file explorer
+				if (!(file.exists() && !file.isDirectory())) {
+					if (!files.containsKey(file.getName())) {
+						// If the file data no longer exist (due to overlimit)
+						// The sender need to send it again
+						JOptionPane.showMessageDialog(getContentPane(),
+								"The file \"" + file.getName() + "\"is outdated " +
+										"and no longer exists in the program cache.\n"
+										+ "Please ask " + sender + " to send it again.");
+						return;
+					}
+					saveFile(file, files.get(file.getName()));
+				}
+
+				// Ask if the user wants to open the file with Desktop API
+				int result = JOptionPane.showConfirmDialog(getContentPane(),
+						"The file is saved in \"" + file.getPath() + "\".\n" +
+								"Do you want to open it?",
+						"Open this file?",
+						JOptionPane.YES_NO_OPTION);
+				if (result == JOptionPane.YES_OPTION) {
+					Desktop.getDesktop().open(file);
+				}
+			} catch (UnsupportedOperationException unsupportedOperationException) {
+				JOptionPane.showMessageDialog(getContentPane(),
+						"Your computer platform doesn't support this action.\n" +
+								"You can manually view the file at:\n" +
+								"\"<Program directory>/" + dataDir + "/" + file.getName() + "\"");
+			} catch (Exception e) {
+				e.printStackTrace();
+				JOptionPane.showMessageDialog(getContentPane(),
+						"An error has occurred while handling file \"" + file.getName() + "\":\n"
+								+ e.getMessage());
+			}
+		}
+
+		private void saveFile(File file, byte[] data) {
+			try (BufferedOutputStream bout = new BufferedOutputStream(new FileOutputStream(file))) {
+				bout.write(data);
+			} catch (Exception e) {
+				e.printStackTrace();
+				JOptionPane.showMessageDialog(getContentPane(),
+						"An error has occurred while handling file \"" + file.getName() + "\":\n"
+								+ e.getMessage());
+			}
 		}
 	}
 }
