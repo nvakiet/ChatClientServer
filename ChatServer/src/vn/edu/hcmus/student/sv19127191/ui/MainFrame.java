@@ -4,10 +4,7 @@ import vn.edu.hcmus.student.sv19127191.server.Server;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.IOException;
 
 /**
@@ -33,6 +30,8 @@ public class MainFrame extends JFrame {
 		socketThread = new Thread(server);
 		setupListeners();
 		getRootPane().setDefaultButton(startBtn);
+		pack();
+		startBtn.requestFocusInWindow();
 	}
 
 	/**
@@ -128,6 +127,27 @@ public class MainFrame extends JFrame {
 				}
 			}
 		});
+
+		FocusAdapter fieldFocus = new FocusAdapter() {
+			String oldText;
+
+			@Override
+			public void focusGained(FocusEvent e) {
+				super.focusGained(e);
+				JTextField f = (JTextField) e.getComponent();
+				oldText = f.getText();
+				f.setText("");
+			}
+
+			@Override
+			public void focusLost(FocusEvent e) {
+				super.focusLost(e);
+				JTextField f = (JTextField) e.getComponent();
+				f.setText(oldText);
+			}
+		};
+		ipInput.addFocusListener(fieldFocus);
+		portInput.addFocusListener(fieldFocus);
 
 		addWindowListener(new WindowAdapter() {
 			@Override

@@ -50,6 +50,7 @@ public class Server implements Runnable {
 	 * @param port The port number to listen on.
 	 */
 	public void setBindAddr(String ip, int port) throws IOException {
+		System.out.println("Start server on " + ip + ":" + port);
 		ss = new ServerSocket(port, 10, InetAddress.getByName(ip));
 		ss.setReuseAddress(true);
 		ss.setSoTimeout(500);
