@@ -14,7 +14,7 @@ import java.io.IOException;
  * vn.edu.hcmus.student.sv19127191.ui<br/>
  * Created by Ngo Van Anh Kiet - MSSV: 19127191<br/>
  * Date 8/1/2022 - 2:49 PM<br/>
- * Description: ...<br/>
+ * Description: The main GUI class of Server program.<br/>
  */
 public class MainFrame extends JFrame {
 	private JTextField ipInput;
@@ -23,6 +23,9 @@ public class MainFrame extends JFrame {
 	private final Thread socketThread;
 	private final Server server;
 
+	/**
+	 * Main constructor of this class
+	 */
 	public MainFrame() throws Exception {
 		super("Chat Server");
 		setupServerPanel();
@@ -32,6 +35,9 @@ public class MainFrame extends JFrame {
 		getRootPane().setDefaultButton(startBtn);
 	}
 
+	/**
+	 * Set up the main GUI panel of the server
+	 */
 	private void setupServerPanel() {
 		JPanel mainPane = new JPanel();
 		mainPane.setLayout(new GridBagLayout());
@@ -104,6 +110,9 @@ public class MainFrame extends JFrame {
 		add(mainPane, BorderLayout.CENTER);
 	}
 
+	/**
+	 * Set up the start button's action listener and the window closing listener to stop the server thread
+	 */
 	private void setupListeners() {
 		startBtn.addActionListener(new ActionListener() {
 			@Override

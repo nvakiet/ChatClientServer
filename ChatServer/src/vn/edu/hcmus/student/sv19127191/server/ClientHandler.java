@@ -12,7 +12,7 @@ import java.net.SocketTimeoutException;
  * vn.edu.hcmus.student.sv19127191.server<br/>
  * Created by Ngo Van Anh Kiet - MSSV: 19127191<br/>
  * Date 8/1/2022 - 2:47 PM<br/>
- * Description: ...<br/>
+ * Description: A handler thread for a client connection. To be used by the Server.<br/>
  */
 public class ClientHandler implements Runnable {
 	private Socket s;
@@ -23,9 +23,17 @@ public class ClientHandler implements Runnable {
 	private String usr; // Username
 	private String pw; // Password
 	private boolean willClose;
-	private final Object lock;
+	private final Object lock; // To lock the data output stream when the server is sending something
 	private Server server;
 
+	/**
+	 * The main constructor of this class.
+	 * @param s An opened socket of the client connection.
+	 * @param username Client username
+	 * @param password Client password
+	 * @param lock A lock object to make sure the server and client thread don't send at the same time.
+	 * @param server The server object to get the other target client.
+	 */
 	public ClientHandler(Socket s, String username, String password, Object lock, Server server) throws IOException {
 		this.s = s;
 		this.s.setKeepAlive(true);
@@ -40,30 +48,51 @@ public class ClientHandler implements Runnable {
 		this.server = server;
 	}
 
+	/**
+	 * Get the remote IP address of this client
+	 */
 	public String getIp() {
 		return ip;
 	}
 
+	/**
+	 * Get the data input stream of this client
+	 */
 	public DataInputStream getDis() {
 		return dis;
 	}
 
+	/**
+	 * Get the data output stream of this client
+	 */
 	public DataOutputStream getDos() {
 		return dos;
 	}
 
+	/**
+	 * Get the username of this client
+	 */
 	public String getUsr() {
 		return usr;
 	}
 
+	/**
+	 * Get the password of this client
+	 */
 	public String getPw() {
 		return pw;
 	}
 
+	/**
+	 * Check whether the client thread will be closed in the next event loop
+	 */
 	public boolean willBeClosed() {
 		return willClose;
 	}
 
+	/**
+	 * Client thread event loop
+	 */
 	@Override
 	public void run() {
 		try {
@@ -136,6 +165,7 @@ public class ClientHandler implements Runnable {
 			System.out.println(usr + " encountered an error:");
 			e.printStackTrace();
 		} finally {
+			// Close the client connection, remove it from the online list then signal other clients
 			try {
 				s.close();
 			} catch (IOException e) {
@@ -147,6 +177,9 @@ public class ClientHandler implements Runnable {
 		}
 	}
 
+	/**
+	 * Signal the client thread to be closed next event loop
+	 */
 	public void close() {
 		willClose = true;
 	}

@@ -20,7 +20,7 @@ import java.util.*;
  * vn.edu.hcmus.student.sv19127191<br/>
  * Created by Ngo Van Anh Kiet - MSSV: 19127191<br/>
  * Date 12/1/2022 - 7:48 AM<br/>
- * Description: ...<br/>
+ * Description: Chat GUI for client program.<br/>
  */
 public class ChatFrame extends JFrame {
 	private final Receiver receiver;
@@ -41,6 +41,13 @@ public class ChatFrame extends JFrame {
 	private HashMap<String, FileHandler> filehandlers;
 	private String cwd;
 
+	/**
+	 * Main constructor for this class
+	 * @param s The socket connection that has been set up from the Login frame
+	 * @param dis The data input stream for the socket
+	 * @param dos The data output stream for the socket
+	 * @param usr The username of the connected account
+	 */
 	public ChatFrame(Socket s, DataInputStream dis, DataOutputStream dos, String usr) {
 		super("Chat Client: " + usr);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -69,6 +76,16 @@ public class ChatFrame extends JFrame {
 		t.start();
 	}
 
+	/**
+	 * A utility method to place UI component on a panel with GridBag Layout
+	 * @param gbc The grid bag constraints for the inserted UI component
+	 * @param panel The target UI panel
+	 * @param comp The UI component to be inserted into the panel
+	 * @param x The x-coordinate of the component's top-left corner on the grid
+	 * @param y The y-coordinate of the component's top-left corner on the grid
+	 * @param w The width of the component from the top-left corner
+	 * @param h The height of the component from the top-left corner
+	 */
 	protected void placeComp(GridBagConstraints gbc, JPanel panel, Component comp, int x, int y, int w, int h) {
 		if (gbc == null)
 			gbc = new GridBagConstraints();
@@ -80,6 +97,9 @@ public class ChatFrame extends JFrame {
 		panel.add(comp, gbc);
 	}
 
+	/**
+	 * Set up the panel to show the list of currently online users
+	 */
 	private void setupOnlineUsersPanel() {
 		JPanel leftPane = new JPanel(new GridBagLayout());
 
@@ -111,6 +131,9 @@ public class ChatFrame extends JFrame {
 		add(leftPane, BorderLayout.LINE_START);
 	}
 
+	/**
+	 * Set up the main chat panel of the Chat frame
+	 */
 	private void setupChatPanel() {
 		try {
 			JPanel centerPanel = new JPanel(new GridBagLayout());
@@ -191,6 +214,9 @@ public class ChatFrame extends JFrame {
 		}
 	}
 
+	/**
+	 * Set up the button listeners
+	 */
 	private void setupButtons() {
 		// Logout button
 		logoutBtn.addActionListener(new ActionListener() {
@@ -235,14 +261,20 @@ public class ChatFrame extends JFrame {
 		});
 	}
 
+	/**
+	 * Configure the listener for the online user list
+	 */
 	private void configOnlineList() {
 		onlineList.addListSelectionListener(new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
 				if (!e.getValueIsAdjusting()) {
+					// If user select a name of other user on the list
 					if (onlineList.getSelectedIndex() > 0) {
+						// Set the current chat log
 						currentTarget.setText(onlineList.getSelectedValue());
 						currentDoc = chatLogs.get(currentTarget.getText());
+						// If there's no chat log for the selected target, create a new chat log
 						if (currentDoc == null) {
 							currentDoc =(HTMLDocument) ((HTMLEditorKit) chatBox.getEditorKit()).createDefaultDocument();
 							chatLogs.put(currentTarget.getText(), currentDoc);
@@ -276,6 +308,9 @@ public class ChatFrame extends JFrame {
 		});
 	}
 
+	/**
+	 * Configure the chat text input area keymap: press Shift-Enter to make a new line; Enter to send the text.
+	 */
 	private void configChatInputKey() {
 		InputMap input = chatInput.getInputMap();
 		KeyStroke enter = KeyStroke.getKeyStroke("ENTER");
@@ -292,6 +327,9 @@ public class ChatFrame extends JFrame {
 		});
 	}
 
+	/**
+	 * Send logout command to the server
+	 */
 	private void logout() {
 		SwingUtilities.invokeLater(() -> {
 			synchronized (dos) {
@@ -307,6 +345,11 @@ public class ChatFrame extends JFrame {
 		});
 	}
 
+	/**
+	 * Send a text message to the target client
+	 * @param target The target username
+	 * @param msg The text message to be sent
+	 */
 	private void sendText(String target, String msg) {
 		SwingUtilities.invokeLater(() -> {
 			synchronized (dos) {
@@ -324,6 +367,11 @@ public class ChatFrame extends JFrame {
 		});
 	}
 
+	/**
+	 * Send a file to the target client
+	 * @param target The target username
+	 * @param file The file to be sent
+	 */
 	private void sendFile(String target, File file) {
 		SwingUtilities.invokeLater(() -> {
 			try (BufferedInputStream fin = new BufferedInputStream(new FileInputStream(file));
@@ -352,6 +400,12 @@ public class ChatFrame extends JFrame {
 		});
 	}
 
+	/**
+	 * Add new text message on the chat box
+	 * @param doc The target chat box's document to insert new message
+	 * @param messenger The name of the sender
+	 * @param message The text message to be inserted
+	 */
 	private synchronized void displayNewText(HTMLDocument doc, String messenger, String message) {
 		try {
 			if (doc == null)
@@ -373,6 +427,13 @@ public class ChatFrame extends JFrame {
 		}
 	}
 
+	/**
+	 * Add new file message on the chat box.
+	 * @param doc The target chat box's document to insert new message
+	 * @param messenger The name of the sender
+	 * @param filename The file name
+	 * @param fileData The file data as byte array
+	 */
 	private synchronized void displayNewFileName(HTMLDocument doc, String messenger, String filename, byte[] fileData) {
 		try {
 			if (doc == null)
@@ -428,9 +489,15 @@ public class ChatFrame extends JFrame {
 		}
 	}
 
+	/**
+	 * A thread for constantly receiving messages from the Server
+	 */
 	class Receiver implements Runnable {
 		private boolean willClose = false;
 
+		/**
+		 * The event loop thread of this Receiver
+		 */
 		@Override
 		public void run() {
 			try {
@@ -498,6 +565,7 @@ public class ChatFrame extends JFrame {
 						"An error has occurred: " + e.getMessage());
 			} finally {
 				try {
+					// Close the connection to the server then return to Login frame
 					if (!socket.isClosed()) {
 						socket.close();
 					}
@@ -513,10 +581,17 @@ public class ChatFrame extends JFrame {
 			}
 		}
 
+		/**
+		 * Signal that the Receiver thread will be closed on next event loop
+		 */
 		public void close() {
 			willClose = true;
 		}
 
+		/**
+		 * Put a new target document to the chat log mapping
+		 * @param target The target username
+		 */
 		private void putTargetDocument(String target) {
 			synchronized (chatLogs) {
 				if (chatLogs.get(target) == null) {
@@ -543,6 +618,9 @@ public class ChatFrame extends JFrame {
 		}
 	}
 
+	/**
+	 * A class for handling the file data in a chat session
+	 */
 	class FileHandler {
 		private final String session;
 		private final String dataDir;
@@ -550,10 +628,18 @@ public class ChatFrame extends JFrame {
 		private final LinkedList<String> fileList;
 		private final int limit;
 
+		/**
+		 * Get the file data directory of this chat session
+		 * @return The path to the data directory for this session
+		 */
 		public String getDataDir() {
 			return dataDir;
 		}
 
+		/**
+		 * Main constructor for this class. Create a new file handler associated with a chat session
+		 * @param sessionName The name of the chat session, which is the target username
+		 */
 		public FileHandler(String sessionName) {
 			session = sessionName;
 			dataDir = "data/" + username.replace(" ", "%20")
@@ -563,18 +649,31 @@ public class ChatFrame extends JFrame {
 			limit = 20;
 		}
 
+		/**
+		 * Add new file data to this handler, also remove the oldest file if the total number of files passes 20
+		 * @param filename The name of the new file to be added
+		 * @param data The data of the new file
+		 */
 		public synchronized void addFile(String filename, byte[] data) {
 			files.put(filename, data);
 			fileList.add(filename);
 			removeOverLimit();
 		}
 
+		/**
+		 * Check if the total number of files in this handler is over 20, then remove the oldest file if it's over the limit
+		 */
 		public synchronized void removeOverLimit() {
 			if (fileList.size() > limit) {
 				files.remove(fileList.remove());
 			}
 		}
 
+		/**
+		 * Handle a file sent in this chat session
+		 * @param sender The username of the sender
+		 * @param file The file object to be saved
+		 */
 		public synchronized void handleFile(String sender, File file) {
 			try {
 				// If the session directory doesn't exist, create it
@@ -600,7 +699,8 @@ public class ChatFrame extends JFrame {
 				// Ask if the user wants to open the file with Desktop API
 				String[] options = new String[] {"Open", "Show in Directory", "Cancel"};
 				int result = JOptionPane.showOptionDialog(getContentPane(),
-						"The file is saved in \"" + file.getPath() + "\".\n" +
+						"The file is saved in:\n" +
+								"\"" + file.getPath() + "\"\n" +
 								"Do you want to open it?",
 						"Open this file?",
 						JOptionPane.DEFAULT_OPTION,
@@ -614,7 +714,7 @@ public class ChatFrame extends JFrame {
 							JOptionPane.showMessageDialog(getContentPane(),
 									"Your computer platform doesn't support this action.\n" +
 											"You can manually view the file at:\n" +
-											"\"<Program directory>/" + dataDir + "/" + file.getName() + "\"");
+											"\"" + file.getPath() + "\"");
 						} catch (Exception e) {
 							e.printStackTrace();
 							JOptionPane.showMessageDialog(getContentPane(),
@@ -632,7 +732,7 @@ public class ChatFrame extends JFrame {
 							JOptionPane.showMessageDialog(getContentPane(),
 									"Your computer platform doesn't support this action.\n" +
 											"You can manually view the file at:\n" +
-											"\"<Program directory>/" + dataDir + "/" + file.getName() + "\"");
+											"\"" + file.getPath() + "\"");
 						} catch (Exception e) {
 							e.printStackTrace();
 							JOptionPane.showMessageDialog(getContentPane(),
@@ -656,6 +756,11 @@ public class ChatFrame extends JFrame {
 			}
 		}
 
+		/**
+		 * Save the file data to a file path in the File object
+		 * @param file The file object to be saved
+		 * @param data The file data to be saved
+		 */
 		private void saveFile(File file, byte[] data) {
 			try (BufferedOutputStream bout = new BufferedOutputStream(new FileOutputStream(file))) {
 				bout.write(data);

@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
  * vn.edu.hcmus.student.sv19127191<br/>
  * Created by Ngo Van Anh Kiet - MSSV: 19127191<br/>
  * Date 12/1/2022 - 7:48 AM<br/>
- * Description: ...<br/>
+ * Description: Login GUI of the chat client.<br/>
  */
 public class LoginFrame extends JFrame {
 	private Socket s = null;
@@ -35,6 +35,9 @@ public class LoginFrame extends JFrame {
 	private JButton loginBtn;
 	private JButton regBtn;
 
+	/**
+	 * Main constructor of this class
+	 */
 	public LoginFrame() {
 		super("Chat Client");
 		setupUI();
@@ -76,6 +79,9 @@ public class LoginFrame extends JFrame {
 		getRootPane().setDefaultButton(loginBtn);
 	}
 
+	/**
+	 * Set up the GUI components of the login frame
+	 */
 	private void setupUI() {
 		JPanel mainPane = new JPanel(new GridBagLayout());
 
@@ -210,6 +216,9 @@ public class LoginFrame extends JFrame {
 		setResizable(false);
 	}
 
+	/**
+	 * Create a client socket then connect to the server. This function is used in the login and register button listeners
+	 */
 	private void connect() {
 		try {
 			if (s != null) {
@@ -228,6 +237,11 @@ public class LoginFrame extends JFrame {
 		}
 	}
 
+	/**
+	 * Connect to the server then log in with a username and password
+	 * @param username The account username in the server's account list
+	 * @param password The account password in the server's account list
+	 */
 	private void login(String username, String password) {
 		enableUI(false);
 		SwingUtilities.invokeLater(() -> {
@@ -263,6 +277,12 @@ public class LoginFrame extends JFrame {
 		});
 	}
 
+	/**
+	 * Connect to the server then register a new account with a username and password.<br>
+	 * The username must contains only letters (uppercase or lowercase), numbers and whitespaces.
+	 * @param username The new account username not in the server's account list
+	 * @param password The new account's password
+	 */
 	private void register(String username, String password) {
 		enableUI(false);
 		SwingUtilities.invokeLater(() -> {
@@ -298,6 +318,11 @@ public class LoginFrame extends JFrame {
 		});
 	}
 
+	/**
+	 * Convert an UTF-8 character array to byte array
+	 * @param arr The character array to be converted
+	 * @return The result byte array
+	 */
 	private static byte[] toBytes(char[] arr) {
 		CharBuffer charBuffer = CharBuffer.wrap(arr);
 		ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(charBuffer);
@@ -307,6 +332,11 @@ public class LoginFrame extends JFrame {
 		return bytes;
 	}
 
+	/**
+	 * Hash a password returned by the password field into an SHA256-hashed string
+	 * @param original The original text password as UTF-8 character array
+	 * @return The hashed password string
+	 */
 	private static String hashPassword(char[] original) {
 		try {
 			MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -321,6 +351,10 @@ public class LoginFrame extends JFrame {
 		return null;
 	}
 
+	/**
+	 * Set the UI state to enable or disable. The user cannot interact with UI components (except closing the frame) if it's disable.
+	 * @param enable a flag to signal the UI to be enabled
+	 */
 	private void enableUI(boolean enable) {
 		ipField.setEnabled(enable);
 		portField.setEnabled(enable);
