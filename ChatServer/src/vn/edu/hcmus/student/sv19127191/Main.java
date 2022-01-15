@@ -14,7 +14,6 @@ public class Main {
 		try {
 			MainFrame mainFrame = new MainFrame();
 			mainFrame.setDefaultCloseOperation(EXIT_ON_CLOSE);
-			mainFrame.setResizable(false);
 			mainFrame.setVisible(true);
 		} catch (Exception e) {
 			e.printStackTrace();

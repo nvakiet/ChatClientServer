@@ -84,8 +84,7 @@ public class LoginFrame extends JFrame {
 			public void focusGained(FocusEvent e) {
 				super.focusGained(e);
 				JTextField f = (JTextField) e.getComponent();
-				if (f != pwField)
-					oldText = f.getText();
+				oldText = f.getText();
 				f.setText("");
 			}
 
@@ -93,9 +92,9 @@ public class LoginFrame extends JFrame {
 			public void focusLost(FocusEvent e) {
 				super.focusLost(e);
 				JTextField f = (JTextField) e.getComponent();
-				if (f == pwField)
-					f.setText("");
-				else f.setText(oldText);
+				if (f.getText().length() == 0) {
+					f.setText(oldText);
+				}
 			}
 		};
 		ipField.addFocusListener(fieldFocus);

@@ -296,7 +296,8 @@ public class ChatFrame extends JFrame {
 						}
 						chatBox.setStyledDocument(currentDoc);
 						boxScroll.getVerticalScrollBar().setValue(boxScroll.getVerticalScrollBar().getMaximum());
-					} else if (onlineList.getSelectedIndex() == 0) {
+					} else if (onlineList.getSelectedIndex() == 0 ||
+							!((DefaultListModel<String>)onlineList.getModel()).contains(currentTarget.getText())) {
 						currentTarget.setText("<Choose another online user>");
 						currentDoc = null;
 						chatBox.setStyledDocument((StyledDocument) chatBox.getEditorKit().createDefaultDocument());

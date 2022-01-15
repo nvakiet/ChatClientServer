@@ -31,6 +31,7 @@ public class MainFrame extends JFrame {
 		setupListeners();
 		getRootPane().setDefaultButton(startBtn);
 		pack();
+		setResizable(false);
 		startBtn.requestFocusInWindow();
 	}
 
@@ -122,14 +123,16 @@ public class MainFrame extends JFrame {
 					portInput.setEditable(false);
 					startBtn.setEnabled(false);
 					socketThread.start();
-				} catch (IOException ex) {
+				} catch (Exception ex) {
 					ex.printStackTrace();
+					JOptionPane.showMessageDialog(getContentPane(),
+							"Can't start the server: " + ex.getMessage());
 				}
 			}
 		});
 
 		FocusAdapter fieldFocus = new FocusAdapter() {
-			String oldText;
+			String oldText = "";
 
 			@Override
 			public void focusGained(FocusEvent e) {
@@ -143,7 +146,9 @@ public class MainFrame extends JFrame {
 			public void focusLost(FocusEvent e) {
 				super.focusLost(e);
 				JTextField f = (JTextField) e.getComponent();
-				f.setText(oldText);
+				if (f.getText().length() == 0) {
+					f.setText(oldText);
+				}
 			}
 		};
 		ipInput.addFocusListener(fieldFocus);
