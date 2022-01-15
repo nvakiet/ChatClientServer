@@ -208,7 +208,6 @@ public class ChatFrame extends JFrame {
 				ex.printStackTrace();
 			}
 			LoginFrame frame = new LoginFrame();
-			frame.pack();
 			frame.setVisible(true);
 			this.dispose();
 		}
@@ -472,7 +471,7 @@ public class ChatFrame extends JFrame {
 							try {
 								File file = new File(e.getURL().toURI());
 								System.out.println(file.getName());
-								filehandlers.get(session).handleFile(messenger, file);
+								filehandlers.get(currentTarget.getText()).handleFile(file);
 							} catch (URISyntaxException ex) {
 								ex.printStackTrace();
 								JOptionPane.showMessageDialog(getContentPane(),
@@ -570,7 +569,6 @@ public class ChatFrame extends JFrame {
 						socket.close();
 					}
 					LoginFrame frame = new LoginFrame();
-					frame.pack();
 					frame.setVisible(true);
 					dispose();
 				} catch (Exception ex) {
@@ -671,10 +669,9 @@ public class ChatFrame extends JFrame {
 
 		/**
 		 * Handle a file sent in this chat session
-		 * @param sender The username of the sender
 		 * @param file The file object to be saved
 		 */
-		public synchronized void handleFile(String sender, File file) {
+		public synchronized void handleFile(File file) {
 			try {
 				// If the session directory doesn't exist, create it
 				File dir = file.getParentFile();
@@ -688,9 +685,8 @@ public class ChatFrame extends JFrame {
 						// If the file data no longer exist (due to overlimit)
 						// The sender need to send it again
 						JOptionPane.showMessageDialog(getContentPane(),
-								"The file \"" + file.getName() + "\"is outdated " +
-										"and no longer exists in the program cache.\n"
-										+ "Please ask " + sender + " to send it again.");
+								"The file \"" + file.getName() + "\"is outdated for this chat session.\n"
+										+ "You or " + currentTarget.getText() + " should send it again.");
 						return;
 					}
 					saveFile(file, files.get(file.getName()));

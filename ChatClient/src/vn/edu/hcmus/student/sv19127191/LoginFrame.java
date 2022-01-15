@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.math.BigInteger;
@@ -75,8 +77,36 @@ public class LoginFrame extends JFrame {
 			}
 		});
 
+		FocusAdapter fieldFocus = new FocusAdapter() {
+			String oldText = "";
+
+			@Override
+			public void focusGained(FocusEvent e) {
+				super.focusGained(e);
+				JTextField f = (JTextField) e.getComponent();
+				if (f != pwField)
+					oldText = f.getText();
+				f.setText("");
+			}
+
+			@Override
+			public void focusLost(FocusEvent e) {
+				super.focusLost(e);
+				JTextField f = (JTextField) e.getComponent();
+				if (f == pwField)
+					f.setText("");
+				else f.setText(oldText);
+			}
+		};
+		ipField.addFocusListener(fieldFocus);
+		portField.addFocusListener(fieldFocus);
+		usrField.addFocusListener(fieldFocus);
+		pwField.addFocusListener(fieldFocus);
+
 		// Set login button as default for Enter key press
 		getRootPane().setDefaultButton(loginBtn);
+		pack();
+		loginBtn.requestFocusInWindow();
 	}
 
 	/**
